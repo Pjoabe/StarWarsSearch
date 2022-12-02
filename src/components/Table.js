@@ -4,9 +4,14 @@ function Table() {
   const [data, setData] = useState([]);
   const [toFilter, setTofilter] = useState('');
   const [colum, setColum] = useState('population');
-  const [toTreat, setToTreat] = useState('maior que');
+  const [totreat, setToTreat] = useState('maior que');
   const [values, setValues] = useState(0);
   const [numberFilter, setNumberFilter] = useState(null);
+  const orbitalPeriod = 'orbital_period';
+  const rotationPeriod = 'rotation_period';
+  const waterSurface = 'surface_water';
+  const [options, setOptions] = useState(['population', orbitalPeriod, 'diameter',
+    rotationPeriod, waterSurface]);
 
   const apiFetch = async () => {
     const request = await fetch('https://swapi.dev/api/planets');
@@ -24,20 +29,38 @@ function Table() {
   const treatConditions = (param) => {
     switch (param) {
     case 'maior que':
-      setNumberFilter(filtered
-        .filter((el) => (+el[colum] > +values)));
+      if (numberFilter === null) {
+        setNumberFilter(filtered
+          .filter((el) => +el[colum] > +values));
+      } else {
+        setNumberFilter(numberFilter
+          .filter((el) => +el[colum] > +values));
+      }
       break;
     case 'menor que':
-      setNumberFilter(filtered
-        .filter((el) => (+el[colum] < +values)));
+      if (numberFilter === null) {
+        setNumberFilter(filtered
+          .filter((el) => +el[colum] < +values));
+      } else {
+        setNumberFilter(numberFilter
+          .filter((el) => +el[colum] < +values));
+      }
       break;
     case 'igual a':
-      setNumberFilter(filtered
-        .filter((el) => (+el[colum] === +values)));
+      if (numberFilter === null) {
+        setNumberFilter(filtered
+          .filter((el) => +el[colum] === +values));
+      } else {
+        setNumberFilter(numberFilter
+          .filter((el) => +el[colum] === +values));
+      }
       break;
     default:
     }
+    setOptions(options.filter((el) => el !== colum));
+    setColum('population');
   };
+
   return (
     <>
       <input
@@ -51,15 +74,15 @@ function Table() {
         value={ colum }
         onChange={ ({ target: { value } }) => setColum(value) }
       >
-        <option>population</option>
-        <option>orbital_period</option>
-        <option>diameter</option>
-        <option>rotation_period</option>
-        <option>surface_water</option>
+        {options.length > 0
+        && options
+          .map((el) => (
+            <option key={ el } value={ el }>{el}</option>
+          ))}
       </select>
       <select
         data-testid="comparison-filter"
-        value={ toTreat }
+        value={ totreat }
         onChange={ ({ target: { value } }) => setToTreat(value) }
       >
         <option>maior que</option>
@@ -75,7 +98,7 @@ function Table() {
       <button
         data-testid="button-filter"
         type="button"
-        onClick={ () => treatConditions(toTreat) }
+        onClick={ () => treatConditions(totreat) }
       >
         Filtrar
       </button>
