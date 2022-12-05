@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
 
 function Table() {
+  const [sortType, setSortType] = useState('');
+  const [test, setTest] = useState(0);
+  const [arraySort, setArraySort] = useState([]);
+  const [filterRight, setFilterRight] = useState([]);
+  const [selecType, setSelectType] = useState('population');
   const [data, setData] = useState([]);
-  const [toFilter, setTofilter] = useState('');
   const [colum, setColum] = useState('population');
   const [totreat, setToTreat] = useState('maior que');
   const [values, setValues] = useState(0);
@@ -18,19 +22,21 @@ function Table() {
     const json = await request.json();
     const apiData = json.results;
     setData(apiData);
+    setFilterRight(apiData);
   };
 
   useEffect(() => {
     apiFetch();
   }, []);
 
-  const filtered = data.filter(({ name }) => name.includes(toFilter));
+  const filtered = ({ target: { value } }) => setFilterRight(data
+    .filter(({ name }) => name.includes(value)));
 
   const treatConditions = (param) => {
     switch (param) {
     case 'maior que':
       if (numberFilter === null) {
-        setNumberFilter(filtered
+        setNumberFilter(filterRight
           .filter((el) => +el[colum] > +values));
       } else {
         setNumberFilter(numberFilter
@@ -39,7 +45,7 @@ function Table() {
       break;
     case 'menor que':
       if (numberFilter === null) {
-        setNumberFilter(filtered
+        setNumberFilter(filterRight
           .filter((el) => +el[colum] < +values));
       } else {
         setNumberFilter(numberFilter
@@ -48,7 +54,7 @@ function Table() {
       break;
     case 'igual a':
       if (numberFilter === null) {
-        setNumberFilter(filtered
+        setNumberFilter(filterRight
           .filter((el) => +el[colum] === +values));
       } else {
         setNumberFilter(numberFilter
@@ -60,14 +66,47 @@ function Table() {
     setOptions(options.filter((el) => el !== colum));
     setColum('population');
   };
+  const arrayTypeStyle = (parem) => {
+    if (numberFilter === null) {
+      return setFilterRight(parem);
+    }
+    return setNumberFilter(parem);
+  };
+  const arrayType = () => {
+    let tantoFaz = [];
+    if (numberFilter === null) {
+      tantoFaz = filterRight;
+      return tantoFaz;
+    }
+    tantoFaz = numberFilter;
+    return tantoFaz;
+  };
+  const makeOrder = () => {
+    const ONE = -1;
+    if (sortType === 'ASC') {
+      return setArraySort(arrayType().sort((a, b) => {
+        if (b[selecType] === 'unknown') return ONE;
+
+        return +a[selecType] - +b[selecType];
+      }));
+    }
+    if (sortType === 'DESC') {
+      return setArraySort(arrayType().sort((a, b) => {
+        if (b[selecType] === 'unknown') return ONE;
+        return +b[selecType] - +a[selecType];
+      }));
+    }
+  };
+  useEffect(() => {
+    arrayTypeStyle(arraySort);
+  }, [test]);
 
   return (
     <>
       <input
         data-testid="name-filter"
         type="text"
-        value={ toFilter }
-        onChange={ ({ target: { value } }) => setTofilter(value) }
+        onChange={ filtered }
       />
       <select
         data-testid="column-filter"
@@ -102,6 +141,46 @@ function Table() {
       >
         Filtrar
       </button>
+      <select
+        name="column-sort"
+        data-testid="column-sort"
+        onChange={ ({ target: { value } }) => setSelectType(value) }
+      >
+        <option value="population">population</option>
+        <option value="rotation_period">rotation_period</option>
+        <option value="orbital_period">orbital_period</option>
+        <option value="surface_water">surface_water</option>
+        <option value="diameter">diameter</option>
+      </select>
+      Ascendente
+      <input
+        type="radio"
+        value="ASC"
+        data-testid="column-sort-input-asc"
+        name="sort"
+        onChange={ ({ target: { value } }) => setSortType(value) }
+      />
+      Descendente
+      <input
+        type="radio"
+        value="DESC"
+        data-testid="column-sort-input-desc"
+        name="sort"
+        onChange={ ({ target: { value } }) => setSortType(value) }
+      />
+      <button
+        type="button"
+        data-testid="column-sort-button"
+        onClick={ () => {
+          makeOrder();
+          const FIVE_HUNDRED = 500;
+          setTimeout(() => {
+            setTest(test + 1);
+          }, FIVE_HUNDRED);
+        } }
+      >
+        Ordernar
+      </button>
       <table>
         <tr>
           <th>Name</th>
@@ -120,9 +199,9 @@ function Table() {
         </tr>
         <tbody>
           {data.length > 0 && numberFilter === null
-           && filtered.map((el) => (
+           && filterRight.map((el) => (
              <tr key={ el.name }>
-               <td>{el.name}</td>
+               <td data-testid="planet-name">{el.name}</td>
                <td>{el.rotation_period}</td>
                <td>{el.orbital_period}</td>
                <td>{el.diameter}</td>
@@ -139,7 +218,7 @@ function Table() {
            ))}
           {numberFilter !== null && numberFilter.map((el) => (
             <tr key={ el.name }>
-              <td>{el.name}</td>
+              <td data-testid="planet-name">{el.name}</td>
               <td>{el.rotation_period}</td>
               <td>{el.orbital_period}</td>
               <td>{el.diameter}</td>
